@@ -28,7 +28,7 @@ const io = require("socket.io")(http);
 ### 1.3. Save Socket.io Client When Connection
 
 ```javascript
-let sockets = {};   //用于保存所有的sokcets对象
+let my_sockets = {};   //用于保存所有的sokcets对象
 
 io.on('connection', (socket) => {
     // 获得客户端传来的参数
@@ -36,8 +36,8 @@ io.on('connection', (socket) => {
     const id = handshakeData._query['id'];
     
     //将socket对象保存到sockets
-    if(!sockets[id]){
-        sockets[id] = socket;
+    if(!my_sockets[id]){
+        my_sockets[id] = socket;
     }
 });
 
@@ -52,3 +52,37 @@ io.on('connection', (socket) => {
     })
 })
 ```
+
+### 1.5. Send Message to Client By id
+
+```javascript
+const sendMessageToClient = (id, msg) => {
+    if(my_sockets[id]){
+        return "socket isn't exist";
+    }
+    my_sockets[id].emit("message", msg);   
+}
+```
+
+
+## 2. Create Socket.io Client
+
+```
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io({ query: "id=1" });       //服务器通过 socket.request._query.id 获得id
+        //or
+        var socket = io( url, {query: "id=1"});   //url默认是当前的服务器地址，即localhost:3000
+        
+        socket.on("message", msg => {             //监听服务器的message消息
+            console.log("on message", msg);
+        });                                 
+        
+        socket.emit("chat messaage", "client msg"); //发送chat message 到服务器
+    </script>
+```
+
+
+### 3. WebSocket Client Connect Socket.io Server
+
+**WebSocket client 如何连接Socket.io Server ？**

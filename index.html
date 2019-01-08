@@ -6,7 +6,7 @@
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
         $(function () {
-            var socket = io("http://localhost:3000/", {query: "id=1"});
+            var socket = io({query: "id=1"});
             $('form').submit(function(e){
                 e.preventDefault(); // prevents page reloading
                 socket.emit('chat message', $('#m').val());
