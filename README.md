@@ -25,23 +25,26 @@ const http = require("http").Server(app).listen(3000);
 const io = require("socket.io")(http);
 ```
 
-### 1.3. Save Socket.io Client When Connection
+### 1.3. 连接时进行token认证，及存储socket对象
 
 ```javascript
 let my_sockets = {};   //用于保存所有的sokcets对象
 
-io.on('connection', (socket) => {
-    // 获得客户端传来的参数
+io.use(function(socket, next) {     //middleware
     const handshakeData = socket.request;
-    const token = handshakeData._query["token"];  
-    
-    //TODO: 检验token 并获得id。如果认证失败，断开连接disconnect
-    
-    //将socket对象保存到sockets
-    if(!my_sockets[id]){
-        my_sockets[id] = socket;
+    const token = handshakeData._query.token;
+
+    if(token !== "token"){      //这里进行权限认证
+        console.log("##### token is fail ####");
+        return next(new Error("fail"));     //客户端可以通过socket.on('error'，err => {})监听
     }
+
+    if(!sockets[token]){
+        sockets[token] = socket;
+    }
+    next();
 });
+
 
 ```
 
@@ -55,14 +58,14 @@ io.on('connection', (socket) => {
 })
 ```
 
-### 1.5. Send Message to Client By id
+### 1.5. Send Message to Client By user_id
 
 ```javascript
-const sendMessageToClient = (id, msg) => {
-    if(my_sockets[id]){
+const sendMessageToClient = (user_id, msg) => {
+    if(my_sockets[user_id]){
         return "socket isn't exist";
     }
-    my_sockets[id].emit("message", msg);   
+    my_sockets[user_id].emit("message", msg);   
 }
 ```
 
@@ -72,10 +75,10 @@ const sendMessageToClient = (id, msg) => {
 ```javascript
 io.on('connection', (socket) => {
     socket.on("disconnect", () => {
-        for(let token in sockets){      //这里通过遍历socket,其实也可以建立Map(socket.id, token)的映射
-            let tmpSocket = sockets[token]; 
+        for(let user_id in sockets){      //这里通过遍历找到对应的socket，其实也可以通过Map(socket.id, user_id)找到socket
+            let tmpSocket = sockets[user_id]; 
             if(tmpSocket.id === socket.id){
-                delete sockets[token];
+                delete sockets[user_id];
             }
         }
     })
@@ -87,7 +90,8 @@ io.on('connection', (socket) => {
 ```
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io({ query: "token=xxxx" });       //服务器通过 socket.request._query.id 获得id
+        //这里每个用户的token都不一样，由于前端不熟，这里暂时写成常量。
+        var socket = io({ query: "token=xxxx" });       //服务器通过 socket.request._query.token 获得token
         //or
         var socket = io( url, {query: "token=xxxx"});   //url默认是当前的服务器地址，即localhost:3000
         

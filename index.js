@@ -11,6 +11,12 @@ app.get('/', function(req, res){
 io.use(function(socket, next) {     //middleware
     const handshakeData = socket.request;
     const token = handshakeData._query.token;
+
+    if(token !== "token"){      //这里进行权限认证
+        console.log("##### token is fail ####");
+        return next(new Error("fail"));     //客户端可以通过socket.on('error'，err => {})监听
+    }
+
     if(!sockets[token]){
         sockets[token] = socket;
     }
