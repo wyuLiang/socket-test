@@ -33,7 +33,9 @@ let my_sockets = {};   //用于保存所有的sokcets对象
 io.on('connection', (socket) => {
     // 获得客户端传来的参数
     const handshakeData = socket.request;
-    const id = handshakeData._query['id'];
+    const token = handshakeData._query["token"];  
+    
+    //TODO: 检验token 并获得id。如果认证失败，断开连接disconnect
     
     //将socket对象保存到sockets
     if(!my_sockets[id]){
@@ -65,14 +67,29 @@ const sendMessageToClient = (id, msg) => {
 ```
 
 
+### 1.6. Delete Sockets[token] When disconnect
+
+```javascript
+io.on('connection', (socket) => {
+    socket.on("disconnect", () => {
+        for(let token in sockets){      //这里通过遍历socket,其实也可以建立Map(socket.id, token)的映射
+            let tmpSocket = sockets[token]; 
+            if(tmpSocket.id === socket.id){
+                delete sockets[token];
+            }
+        }
+    })
+});
+```
+
 ## 2. Create Socket.io Client
 
 ```
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io({ query: "id=1" });       //服务器通过 socket.request._query.id 获得id
+        var socket = io({ query: "token=xxxx" });       //服务器通过 socket.request._query.id 获得id
         //or
-        var socket = io( url, {query: "id=1"});   //url默认是当前的服务器地址，即localhost:3000
+        var socket = io( url, {query: "token=xxxx"});   //url默认是当前的服务器地址，即localhost:3000
         
         socket.on("message", msg => {             //监听服务器的message消息
             console.log("on message", msg);

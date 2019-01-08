@@ -6,7 +6,7 @@
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
         $(function () {
-            var socket = io({query: "id=1"});
+            var socket = io({query: "token=token"});
             $('form').submit(function(e){
                 e.preventDefault(); // prevents page reloading
                 socket.emit('chat message', $('#m').val());
@@ -14,9 +14,9 @@
                 return false;
             });
 
-            socket.on("message", function(data){
-                console.log("#########", data);
-            })
+            socket.on('message', function(msg){
+                $('#messages').append($('<li>').text(msg));
+            });
         });
     </script>
     <style>
