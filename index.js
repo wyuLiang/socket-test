@@ -1,8 +1,8 @@
 const app = require("express")();
-const http = require("http").Server(app);
+const http = require("http").Server(app).listen(3000);
 const io = require("socket.io")(http);
 
-let id2Socket = {};
+let sockets = {};
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + "/index.html");
@@ -11,8 +11,8 @@ app.get('/', function(req, res){
 io.use(function(socket, next) {
     const handshakeData = socket.request;
     const id = handshakeData._query['id'];
-    if(!id2Socket[id]){
-        id2Socket[id] = socket;
+    if(!sockets[id]){
+        sockets[id] = socket;
     }
     next();
 });
@@ -26,17 +26,6 @@ io.on("connection", function(socket){
     });
 
     socket.on('chat message', function(msg){
-        console.log('message ', + msg);
+        console.log('message ', msg);
     });
 });
-
-http.listen(3000, function(){
-    console.log("listening on *:3000");
-});
-
-setInterval(function(){
-    if(id2Socket["1"]){
-        id2Socket["1"].emit("message", "123456");
-        console.log(id2Socket["1"]);
-    }
-}, 3000);
